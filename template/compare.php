@@ -78,10 +78,10 @@ foreach ($buttons as $li) {
         	<td class="type-<?php echo $_REQUEST['action']; ?>">
 <?php
 
-//             if( empty( $tableData->isNew ) ) {
-//                 echo '</td>';
-//                 continue;
-//             }
+            if( empty( $tableData->isNew ) ) {
+                echo '</td>';
+                continue;
+            }
 
             if( empty ( $tableData->fields ) ) {
                 echo '</td>';
