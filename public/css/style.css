@@ -1,6 +1,9 @@
 table.table {
     width: 100%;
 }
+.type-tables {
+    border: 1px solid #efefef;
+}
 
 td {
     vertical-align: top;

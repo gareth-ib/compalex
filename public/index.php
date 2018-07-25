@@ -1,7 +1,11 @@
 <?php
+error_reporting(-1);
+
+include '../vendor/autoload.php';
+
 require_once 'config.php';
 
-try {
+// try {
     if (!defined('FIRST_DSN')) throw new Exception('Check your config.php file and uncomment settings section for your database');
     if (!strpos(FIRST_DSN, '://')) throw new Exception('Wrong dsn format');
 
@@ -58,7 +62,7 @@ try {
         require_once TEMPLATE_DIR . 'compare.php';
     }
 
-} catch (Exception $e) {
-    include_once TEMPLATE_DIR . 'error.php';
-}
+// } catch (Exception $e) {
+//     include_once TEMPLATE_DIR . 'error.php';
+// }
 

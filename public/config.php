@@ -1,6 +1,6 @@
 <?php
 
-define('DIR_ROOT', dirname(__FILE__));
+define('DIR_ROOT', dirname(__FILE__).'/..');
 define('ENVIRONMENT_FILE', DIR_ROOT . '/.environment');
 define('DRIVER_DIR', DIR_ROOT . '/driver/');
 define('TEMPLATE_DIR', DIR_ROOT . '/template/');

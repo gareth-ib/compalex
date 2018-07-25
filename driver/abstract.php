@@ -2,6 +2,7 @@
 
 abstract class BaseDriver
 {
+
     protected $_dsn = array();
 
     protected static $_instance = null;
@@ -11,7 +12,6 @@ abstract class BaseDriver
         return $this->_getConnect(FIRST_DSN, FIRST_BASE_NAME);
     }
 
-
     protected function _getSecondConnect()
     {
         return $this->_getConnect(SECOND_DSN, SECOND_BASE_NAME);
@@ -19,7 +19,7 @@ abstract class BaseDriver
 
     protected function _getConnect($dsn)
     {
-        if (!isset($this->_dsn[$dsn])) {
+        if (! isset($this->_dsn[$dsn])) {
             $pdsn = parse_url($dsn);
 
             $dsn = DRIVER . ':host=' . $pdsn['host'] . ';port=' . $pdsn['port'] . ';dbname=' . substr($pdsn['path'], 1, 1000) . (DRIVER !== 'pgsql' ? ';charset=' . DATABASE_ENCODING : '');
@@ -46,39 +46,55 @@ abstract class BaseDriver
         return $out;
     }
 
-
     protected function _getCompareArray($query, $diffMode = false, $ifOneLevelDiff = false)
     {
 
         $out = array();
-        $fArray = $this->_prepareOutArray($this->_select($query, $this->_getFirstConnect(), FIRST_BASE_NAME), $diffMode, $ifOneLevelDiff);
-        $sArray = $this->_prepareOutArray($this->_select($query, $this->_getSecondConnect(), SECOND_BASE_NAME), $diffMode, $ifOneLevelDiff);
 
-        $allTables = array_unique(array_merge(array_keys($fArray), array_keys($sArray)));
-        sort($allTables);
+        $tablesFirst  = $this->_prepareOutArray($this->_select($query, $this->_getFirstConnect(), FIRST_BASE_NAME), $diffMode, $ifOneLevelDiff);
+        $tablesSecond = $this->_prepareOutArray($this->_select($query, $this->_getSecondConnect(), SECOND_BASE_NAME), $diffMode, $ifOneLevelDiff);
 
-        foreach ($allTables as $v) {
-            $allFields = array_unique(array_merge(array_keys((array)@$fArray[$v]), array_keys((array)@$sArray[$v])));
-            foreach ($allFields as $f) {
-                switch (true) {
-                    case (!isset($fArray[$v][$f])): {
-                        if(is_array($sArray[$v][$f])) $sArray[$v][$f]['isNew'] = true;
-                        break;
+        $allTableNames = array_unique(
+            array_merge(
+                array_keys($tablesFirst),
+                array_keys($tablesSecond)
+            )
+        );
+
+        sort($allTableNames);
+
+        foreach ($allTableNames as $tableName) {
+
+            $allFieldNames = array_unique(
+                array_merge(
+                    array_keys( $tablesFirst[$tableName]->fields  ?? [] ),
+                    array_keys( $tablesSecond[$tableName]->fields ?? [] )
+                )
+            );
+
+            foreach ($allFieldNames as $fieldName) {
+                if (! isset($tablesFirst[$tableName]->fields[$fieldName])) {
+                    if (isset($tablesSecond[$tableName]->fields[$fieldName])) {
+                        $tablesSecond[$tableName]->fields[$fieldName]->isNew = true;
+                        $tablesSecond[$tableName]->isNew = true;
                     }
-                    case (!isset($sArray[$v][$f])): {
-                        if(is_array($fArray[$v][$f])) $fArray[$v][$f]['isNew'] = true;
-                        break;
+                } else if (! isset($tablesSecond[$tableName]->fields[$fieldName])) {
+                    if (isset($tablesFirst[$tableName]->fields[$fieldName])) {
+                        $tablesFirst[$tableName]->fields[$fieldName]->isNew = true;
+                        $tablesFirst[$tableName]->isNew = true;
                     }
-                    case (isset($fArray[$v][$f]['dtype']) && isset($sArray[$v][$f]['dtype']) && ($fArray[$v][$f]['dtype'] != $sArray[$v][$f]['dtype'])) : {
-                        $fArray[$v][$f]['changeType'] = true;
-                        $sArray[$v][$f]['changeType'] = true;
-                        break;
-                    }
+                } else if (
+                            isset($tablesFirst[$tableName]->fields[$fieldName]->dtype)
+                        &&  isset($tablesSecond[$tableName]->fields[$fieldName]->dtype)
+                        &&  $tablesFirst[$tableName]->fields[$fieldName]->dtype != $tablesSecond[$tableName]->fields[$fieldName]->dtype
+                    ) {
+                    $tablesFirst[$tableName]->fields[$fieldName]->changeType = true;
+                    $tablesSecond[$tableName]->fields[$fieldName]->changeType = true;
                 }
             }
-            $out[$v] = array(
-                'fArray' => @$fArray[$v],
-                'sArray' => @$sArray[$v]
+            $out[$tableName] = array(
+                'fArray' => $tablesFirst[$tableName]  ?? [],
+                'sArray' => $tablesSecond[$tableName] ?? []
             );
         }
         return $out;
@@ -86,18 +102,21 @@ abstract class BaseDriver
 
     private function _prepareOutArray($result, $diffMode, $ifOneLevelDiff)
     {
-        $mArray = array();
-        foreach ($result as $r) {
-            if ($diffMode) {
-                foreach (explode("\n", $r['ARRAY_KEY_2']) as $pr) {
-                    $mArray[$r['ARRAY_KEY_1']][$pr] = $r;
-                }
 
+        $mArray = array();
+        foreach ($result as $row) {
+            if ($diffMode) {
+                foreach (explode("\n", $row['ARRAY_KEY_2']) as $pr) {
+                    $mArray[$row['ARRAY_KEY_1']][$pr] = new \compalex\Objects\Field($row);
+                }
             } else {
-                if($ifOneLevelDiff){
-                    $mArray[$r['ARRAY_KEY_1']] = $r;
-                }else{
-                    $mArray[$r['ARRAY_KEY_1']][$r['ARRAY_KEY_2']] = $r;
+                if ($ifOneLevelDiff) {
+                    $mArray[$row['ARRAY_KEY_1']] = new \compalex\Objects\Field($row);
+                } else {
+                    if( !isset( $mArray[$row['ARRAY_KEY_1']] ) ) {
+                        $mArray[$row['ARRAY_KEY_1']] = new \compalex\Objects\Table();
+                    }
+                    $mArray[$row['ARRAY_KEY_1']]->fields[$row['ARRAY_KEY_2']] = new \compalex\Objects\Field($row);
                 }
             }
         }
@@ -146,9 +165,11 @@ abstract class BaseDriver
 
     public function getTableRows($baseName, $tableName, $rowCount = SAMPLE_DATA_LENGTH)
     {
-        if (!$baseName) throw new Exception('$baseName is not set');
-        if (!$tableName) throw new Exception('$tableName is not set');
-        $rowCount = (int)$rowCount;
+        if (! $baseName)
+            throw new Exception('$baseName is not set');
+        if (! $tableName)
+            throw new Exception('$tableName is not set');
+        $rowCount = (int) $rowCount;
         $tableName = preg_replace("$[^A-z0-9.,-_]$", '', $tableName);
         switch (DRIVER) {
             case "mssql":
@@ -159,7 +180,6 @@ abstract class BaseDriver
             case "mysql":
                 $query = 'SELECT * FROM ' . $tableName . ' LIMIT ' . $rowCount;
                 break;
-
         }
         if ($baseName === FIRST_BASE_NAME) {
             $result = $this->_select($query, $this->_getFirstConnect(), FIRST_BASE_NAME);
@@ -186,6 +206,4 @@ abstract class BaseDriver
 
         return $out;
     }
-
-
 }
