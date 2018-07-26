@@ -1,8 +1,6 @@
 <meta charset="utf-8">
 
-<style type="text/css" media="all">
-    @import url("/public/css/style.css");
-</style>
+<link rel="stylesheet" type="text/css" href="/css/style.css">
 
 <?php if (count($rows)) { ?>
     <table class="data-table">

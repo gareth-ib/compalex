@@ -3,17 +3,15 @@
 <head>
     <meta charset="utf-8">
     <title>COMPALEX - database schema compare tool</title>
-    <script src="/public/js/jquery.min.js"></script>
-    <script src="/public/js/functional.js"></script>
-    <style type="text/css" media="all">
-        @import url("/public/css/style.css");
-    </style>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/functional.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 
 <body>
 <div class="modal-background" onclick="Data.hideTableData(); return false;">
     <div class="modal">
-        <iframe src="http://compare/index.php?action=rows&baseName=avalon&tableName=ScriptList" frameborder="0"
+        <iframe src="/index.php?action=rows&baseName=avalon&tableName=ScriptList" frameborder="0"
                 style="width: 100%; height: 100%;"></iframe>
     </div>
 </div>

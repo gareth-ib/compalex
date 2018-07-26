@@ -1,6 +1,8 @@
 <?php
 
-class Driver extends BaseDriver
+namespace compalex\Drivers;
+
+class mysql extends BaseDriver
 {
 
     public static function getInstance()

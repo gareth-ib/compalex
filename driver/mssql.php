@@ -1,6 +1,8 @@
 <?php
 
-class Driver extends BaseDriver
+namespace compalex\Drivers;
+
+class mssql extends BaseDriver
 {
     const
         FOREIGN_KEYS = 'F',

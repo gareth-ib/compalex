@@ -1,5 +1,10 @@
 <?php
 
+namespace compalex\Drivers;
+
+use PDO;
+use Exception;
+
 abstract class BaseDriver
 {
 

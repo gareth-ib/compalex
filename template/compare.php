@@ -37,11 +37,13 @@ switch (DRIVER) {
         break;
 }
 
-if (!isset($_REQUEST['action']))
+if (! isset($_REQUEST['action']))
     $_REQUEST['action'] = 'tables';
+
 foreach ($buttons as $li) {
     echo '<a href="index.php?action=' . $li . '"  ' . ($li == $_REQUEST['action'] ? 'class="active"' : '') . '>' . $li . '</a>&nbsp;';
 }
+
 ?>
             </td>
             <td class="sp">
@@ -92,9 +94,10 @@ foreach ($buttons as $li) {
                 <h3><?php echo $tableName; ?> <sup style="color: red;"><?php echo count($tableData->fields); ?></sup></h3>
                 <div class="table-additional-info">
 <?php
-            if(isset($additionalTableInfo[$tableName][$blockType]->fields)) {
+            if (isset($additionalTableInfo[$tableName][$blockType]->fields)) {
                 foreach ($additionalTableInfo[$tableName][$blockType]->fields as $paramKey => $paramValue) {
-                    if(strpos($paramKey, 'ARRAY_KEY') === false) echo "<b>{$paramKey}</b>: {$paramValue}<br />";
+                    if (strpos($paramKey, 'ARRAY_KEY') === false)
+                        echo "<b>{$paramKey}</b>: {$paramValue}<br />";
                 }
             }
 ?>

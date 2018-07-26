@@ -10,43 +10,44 @@ require_once 'config.php';
     if (!strpos(FIRST_DSN, '://')) throw new Exception('Wrong dsn format');
 
     $pdsn = explode('://', FIRST_DSN);
+
     define('DRIVER', $pdsn[0]);
 
-    if (!file_exists(DRIVER_DIR . DRIVER . '.php')) throw new Exception('Driver ' . DRIVER . ' not found');
+    $class = '\\compalex\\Drivers\\'.$pdsn[0];
 
+    $driverModel = new $class();
 
-    define('FIRST_BASE_NAME', @end(explode('/', FIRST_DSN)));
-    define('SECOND_BASE_NAME', @end(explode('/', SECOND_DSN)));
+    $dsnFirstExpl   = explode('/', FIRST_DSN);
+    $dsnSecondExpl  = explode('/', SECOND_DSN);
 
-    // abstract class
-    require_once DRIVER_DIR . 'abstract.php';
-    require_once DRIVER_DIR . DRIVER . '.php';
+    define('FIRST_BASE_NAME', end($dsnFirstExpl));
+    define('SECOND_BASE_NAME', end($dsnSecondExpl));
 
-    $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : 'tables';
+    $action = $_REQUEST['action'] ?? 'tables';
 
     $additionalTableInfo = array();
     switch ($action) {
         case "tables":
-            $tables = Driver::getInstance()->getCompareTables();
-            $additionalTableInfo = Driver::getInstance()->getAdditionalTableInfo();
+            $tables = $driverModel->getCompareTables();
+            $additionalTableInfo = $driverModel->getAdditionalTableInfo();
             break;
         case "views":
-            $tables = Driver::getInstance()->getCompareViews();
+            $tables = $driverModel->getCompareViews();
             break;
         case "procedures":
-            $tables = Driver::getInstance()->getCompareProcedures();
+            $tables = $driverModel->getCompareProcedures();
             break;
         case "functions":
-            $tables = Driver::getInstance()->getCompareFunctions();
+            $tables = $driverModel->getCompareFunctions();
             break;
         case "indexes":
-            $tables = Driver::getInstance()->getCompareKeys();
+            $tables = $driverModel->getCompareKeys();
             break;
         case "triggers":
-            $tables = Driver::getInstance()->getCompareTriggers();
+            $tables = $driverModel->getCompareTriggers();
             break;
         case "rows":
-            $rows = Driver::getInstance()->getTableRows($_REQUEST['baseName'], $_REQUEST['tableName']);
+            $rows = $driverModel->getTableRows($_REQUEST['baseName'], $_REQUEST['tableName']);
             break;
     }
 
